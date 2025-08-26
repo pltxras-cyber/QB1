@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthquake Quiz - Randomized Answers</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 700px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        h1 {
+            color: #d35400;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        #start-screen {
+            display: block;
+        }
+        
+        .btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .option-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: #3498db;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .option-btn:hover {
+            background: #2980b9;
+            transform: translateX(5px);
+        }
+        
+        .correct {
+            background: #2ecc71 !important;
+        }
+        
+        .incorrect {
+            background: #e74c3c !important;
+        }
+        
+        .question {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .progress {
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #f39c12;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 20px 0;
+        }
+        
+        .result-message {
+            font-size: 20px;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f1f2f6;
+        }
+        
+        .earthquake-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+            color: #e74c3c;
+        }
+        
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: #dfe6e9;
+            border-radius: 10px;
+            text-align: left;
+            font-size: 16px;
+        }
+        
+        .timer-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #34495e;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .timer {
+            font-size: 24px;
+        }
+        
+        .time-warning {
+            color: #e74c3c;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+        
+        .question-counter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #34495e;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="earthquake-icon">🌋</div>
+        <h1>Earthquake Quiz</h1>
+        
+        <div class="timer-container">
+            Time left: <span id="timer" class="timer">60</span>s
+        </div>
+        
+        <div class="question-counter">
+            Question: <span id="question-counter">1</span>/20
+        </div>
+        
+        <div id="start-screen" class="screen">
+            <p>Test your knowledge about earthquakes with this randomized quiz!</p>
+            <p>You have 60 seconds to answer 20 questions.</p>
+            <p>Correct answer positions are randomized each time!</p>
+            <button id="start-btn" class="btn">Start Quiz</button>
+        </div>
+        
+        <div id="quiz-screen" class="screen">
+            <div class="progress">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="question" class="question"></div>
+            <div id="options-container"></div>
+            <div id="explanation" class="explanation"></div>
+            <button id="next-btn" class="btn" style="display: none;">Next Question</button>
+        </div>
+        
+        <div id="results-screen" class="screen">
+            <div class="score">Your Score: <span id="score">0</span>/20</div>
+            <div id="result-message" class="result-message"></div>
+            <button id="restart-btn" class="btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Quiz questions and answers
+        const questions = [
+            {
+                question: "What is the Richter scale used to measure?",
+                options: ["Earthquake magnitude", "Wind speed", "Temperature", "Ocean depth"],
+                answer: 0,
+                explanation: "The Richter scale is used to measure the magnitude of earthquakes, which is a logarithmic scale representing the energy released."
+            },
+            {
+                question: "What is the point on the Earth's surface directly above an earthquake's focus called?",
+                options: ["Epicenter", "Hypocenter", "Seismic zone", "Fault line"],
+                answer: 0,
+                explanation: "The epicenter is the point on the Earth's surface directly above the hypocenter (or focus), where the earthquake originates."
+            },
+            {
+                question: "Which tectonic plate boundary is associated with most earthquakes?",
+                options: ["Transform boundaries", "Divergent boundaries", "Convergent boundaries", "All of the above"],
+                answer: 3,
+                explanation: "While all types of plate boundaries can produce earthquakes, convergent boundaries (where plates collide) often produce the most powerful quakes."
+            },
+            {
+                question: "What is the name of the instrument that records earthquake waves?",
+                options: ["Seismograph", "Barograph", "Hygrometer", "Anemometer"],
+                answer: 0,
+                explanation: "A seismograph is an instrument that measures and records details of earthquakes, such as force and duration."
+            },
+            {
+                question: "Which wave type travels fastest through the Earth during an earthquake?",
+                options: ["P-waves (Primary waves)", "S-waves (Secondary waves)", "Surface waves", "Love waves"],
+                answer: 0,
+                explanation: "P-waves (Primary waves) are the fastest seismic waves and are the first to be recorded by seismographs."
+            },
+            {
+                question: "What is the name of the fracture in Earth's crust where earthquakes occur?",
+                options: ["Fault", "Crevice", "Rift", "Trench"],
+                answer: 0,
+                explanation: "A fault is a fracture or zone of fractures between two blocks of rock. Most earthquakes occur along fault lines."
+            },
+            {
+                question: "Which country experiences the most earthquakes annually?",
+                options: ["Japan", "Indonesia", "Chile", "United States"],
+                answer: 0,
+                explanation: "Japan experiences over 1,500 noticeable earthquakes per year due to its location along the Pacific Ring of Fire."
+            },
+            {
+                question: "What magnitude earthquake is considered a 'great earthquake'?",
+                options: ["8.0 or higher", "7.0-7.9", "6.0-6.9", "5.0-5.9"],
+                answer: 0,
+                explanation: "Earthquakes with a magnitude of 8.0 or higher are classified as 'great earthquakes' and can cause tremendous damage."
+            },
+            {
+                question: "What should you do during an earthquake if you're indoors?",
+                options: ["Drop, Cover, and Hold On", "Run outside immediately", "Stand in a doorway", "Hide under a table without holding on"],
+                answer: 0,
+                explanation: "The recommended action during an earthquake is to Drop to the ground, take Cover under a sturdy piece of furniture, and Hold On until shaking stops."
+            },
+            {
+                question: "Which of these is a secondary effect of earthquakes?",
+                options: ["Tsunamis", "Ground shaking", "Surface rupture", "Aftershocks"],
+                answer: 0,
+                explanation: "Tsunamis are secondary effects of earthquakes, especially those that occur under or near the ocean."
+            },
+            {
+                question: "What is liquefaction during an earthquake?",
+                options: [
+                    "When soil temporarily loses strength and behaves like a liquid",
+                    "When rocks melt due to friction",
+                    "When groundwater boils",
+                    "When buildings collapse into a liquid state"
+                ],
+                answer: 0,
+                explanation: "Liquefaction occurs when saturated soil substantially loses strength and stiffness in response to applied stress, such as shaking during an earthquake, causing it to behave like a liquid."
+            },
+            {
+                question: "Which scale measures the intensity of shaking from an earthquake?",
+                options: ["Modified Mercalli Scale", "Richter Scale", "Moment Magnitude Scale", "Fujita Scale"],
+                answer: 0,
+                explanation: "The Modified Mercalli Scale measures the intensity of shaking from an earthquake based on observed effects, while the Richter and Moment Magnitude scales measure the energy released."
+            },
+            {
+                question: "Approximately how many earthquakes detectable without instruments occur each year?",
+                options: ["500,000", "100,000", "1,000,000", "50,000"],
+                answer: 0,
+                explanation: "It's estimated that about 500,000 earthquakes detectable without instruments occur each year, though most are too small to be felt by humans."
+            },
+            {
+                question: "What are smaller earthquakes that follow the main shock called?",
+                options: ["Aftershocks", "Foreshocks", "Tremors", "Echo quakes"],
+                answer: 0,
+                explanation: "Aftershocks are smaller earthquakes that occur after the main shock in the same area. Foreshocks are smaller quakes that sometimes precede the main earthquake."
+            },
+            {
+                question: "What is the 'Ring of Fire'?",
+                options: [
+                    "An area around the Pacific Ocean with frequent earthquakes and volcanoes",
+                    "A circle of fire created during earthquakes",
+                    "A measurement tool for earthquake intensity",
+                    "A type of seismic wave"
+                ],
+                answer: 0,
+                explanation: "The Ring of Fire is a major area in the basin of the Pacific Ocean where many earthquakes and volcanic eruptions occur."
+            },
+            {
+                question: "Which of these materials is most resistant to earthquake damage?",
+                options: ["Wood", "Unreinforced masonry", "Concrete without steel reinforcement", "Adobe brick"],
+                answer: 0,
+                explanation: "Wood is flexible and can withstand shaking better than brittle materials like unreinforced masonry or adobe brick."
+            },
+            {
+                question: "What is a tsunami?",
+                options: [
+                    "A series of large ocean waves caused by underwater earthquakes",
+                    "A type of seismic wave",
+                    "An earthquake measuring instrument",
+                    "The point where an earthquake originates"
+                ],
+                answer: 0,
+                explanation: "A tsunami is a series of enormous ocean waves caused by earthquakes, volcanic eruptions, or landslides under the sea."
+            },
+            {
+                question: "How are earthquakes measured?",
+                options: [
+                    "Seismographs",
+                    "Barometers",
+                    "Thermometers",
+                    "Hygrometers"
+                ],
+                answer: 0,
+                explanation: "Earthquakes are measured using seismographs, which record the seismic waves generated by earthquakes."
+            },
+            {
+                question: "What does the moment magnitude scale measure?",
+                options: [
+                    "The total energy released by an earthquake",
+                    "The intensity of shaking at a specific location",
+                    "The duration of an earthquake",
+                    "The depth of an earthquake's focus"
+                ],
+                answer: 0,
+                explanation: "The moment magnitude scale measures the total energy released by an earthquake, and it's the scale most commonly used by seismologists today."
+            },
+            {
+                question: "Which US state experiences the most earthquakes?",
+                options: ["Alaska", "California", "Hawaii", "Nevada"],
+                answer: 0,
+                explanation: "Alaska experiences the most earthquakes in the United States, with California being second."
+            },
+            {
+                question: "What is the focus of an earthquake?",
+                options: [
+                    "The point inside the Earth where the earthquake starts",
+                    "The point on the surface directly above where it starts",
+                    "The instrument used to detect earthquakes",
+                    "The scale used to measure earthquakes"
+                ],
+                answer: 0,
+                explanation: "The focus (or hypocenter) is the point inside the Earth where the earthquake rupture starts."
+            },
+            {
+                question: "What are P-waves also known as?",
+                options: ["Primary waves", "Pressure waves", "Preliminary waves", "Power waves"],
+                answer: 0,
+                explanation: "P-waves are called Primary waves because they are the first waves to arrive at a seismograph station after an earthquake."
+            },
+            {
+                question: "Which city suffered a devastating earthquake in 1906?",
+                options: ["San Francisco", "Tokyo", "Lisbon", "Los Angeles"],
+                answer: 0,
+                explanation: "The 1906 San Francisco earthquake was one of the most significant earthquakes of all time, with a magnitude of 7.9."
+            },
+            {
+                question: "What is the minimum number of seismograph stations needed to locate an earthquake's epicenter?",
+                options: ["Three", "One", "Two", "Four"],
+                answer: 0,
+                explanation: "Scientists need data from at least three seismograph stations to triangulate the location of an earthquake's epicenter."
+            }
+        ];
+
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 60;
+        
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options-container');
+        const nextButton = document.getElementById('next-btn');
+        const scoreElement = document.getElementById('score');
+        const resultMessage = document.getElementById('result-message');
+        const progressBar = document.getElementById('progress-bar');
+        const explanationElement = document.getElementById('explanation');
+        const timerElement = document.getElementById('timer');
+        const questionCounter = document.getElementById('question-counter');
+        
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        
+        function startGame() {
+            // Reset game state
+            score = 0;
+            currentQuestionIndex = 0;
+            timeLeft = 60;
+            
+            // Show timer with normal color
+            timerElement.textContent = timeLeft;
+            timerElement.classList.remove('time-warning');
+            
+            // Select 20 random questions
+            currentQuestions = [...questions];
+            shuffleArray(currentQuestions);
+            currentQuestions = currentQuestions.slice(0, 20);
+            
+            // Update UI
+            startScreen.style.display = 'none';
+            resultsScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            
+            // Start timer
+            clearInterval(timer);
+            timer = setInterval(updateTimer, 1000);
+            
+            showQuestion();
+        }
+        
+        function updateTimer() {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            
+            // Change color when time is running low
+            if (timeLeft <= 10) {
+                timerElement.classList.add('time-warning');
+            }
+            
+            // End game if time runs out
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                endGame();
+            }
+        }
+        
+        function showQuestion() {
+            // Update progress bar
+            progressBar.style.width = `${(currentQuestionIndex / currentQuestions.length) * 100}%`;
+            
+            // Update question counter
+            questionCounter.textContent = currentQuestionIndex + 1;
+            
+            // Reset UI state
+            resetState();
+            
+            // Show current question
+            const currentQuestion = currentQuestions[currentQuestionIndex];
+            questionElement.textContent = currentQuestion.question;
+            
+            // Randomize the order of options
+            const randomizedOptions = [...currentQuestion.options];
+            const correctAnswerIndex = currentQuestion.answer;
+            const correctAnswer = randomizedOptions[correctAnswerIndex];
+            
+            // Shuffle the options array
+            shuffleArray(randomizedOptions);
+            
+            // Find the new position of the correct answer
+            const newCorrectIndex = randomizedOptions.indexOf(correctAnswer);
+            
+            // Add options with randomized order
+            randomizedOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn');
+                button.addEventListener('click', () => selectAnswer(index, newCorrectIndex));
+                optionsContainer.appendChild(button);
+            });
+            
+            // Store the new correct index for this question
+            currentQuestions[currentQuestionIndex].randomizedAnswer = newCorrectIndex;
+            
+            // Hide explanation and next button initially
+            explanationElement.style.display = 'none';
+            nextButton.style.display = 'none';
+        }
+        
+        function resetState() {
+            while (optionsContainer.firstChild) {
+                optionsContainer.removeChild(optionsContainer.firstChild);
+            }
+            explanationElement.textContent = '';
+            explanationElement.style.display = 'none';
+            nextButton.style.display = 'none';
+        }
+        
+        function selectAnswer(selectedIndex, correctIndex) {
+            // Stop interactions while showing result
+            const options = optionsContainer.querySelectorAll('.option-btn');
+            options.forEach(option => {
+                option.disabled = true;
+            });
+            
+            const currentQuestion = currentQuestions[currentQuestionIndex];
+            
+            // Show explanation
+            explanationElement.textContent = currentQuestion.explanation;
+            explanationElement.style.display = 'block';
+            
+            // Mark correct and incorrect answers
+            if (selectedIndex === correctIndex) {
+                options[selectedIndex].classList.add('correct');
+                score++;
+            } else {
+                options[selectedIndex].classList.add('incorrect');
+                options[correctIndex].classList.add('correct');
+            }
+            
+            // Show next button
+            nextButton.style.display = 'block';
+        }
+        
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < currentQuestions.length) {
+                showQuestion();
+            } else {
+                clearInterval(timer);
+                endGame();
+            }
+        }
+        
+        function endGame() {
+            // Hide quiz screen and show results
+            quizScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+            
+            // Update score
+            scoreElement.textContent = score;
+            
+            // Show message based on score
+            if (score >= 18) {
+                resultMessage.textContent = "Excellent! You're an earthquake expert!";
+            } else if (score >= 14) {
+                resultMessage.textContent = "Great job! You know a lot about earthquakes.";
+            } else if (score >= 10) {
+                resultMessage.textContent = "Good effort! You have basic knowledge of earthquakes.";
+            } else {
+                resultMessage.textContent = "Keep learning! Earthquakes are fascinating natural phenomena.";
+            }
+            
+            // Add time's up message if applicable
+            if (timeLeft <= 0) {
+                resultMessage.textContent += " Time's up!";
+            }
+        }
+        
+        // Fisher-Yates shuffle algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>
